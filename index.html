@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ContentAI — Local Demo</title>
+  <style>
+    /* --- Theme & layout inspired by your screenshots (soft pink UI) --- */
+    :root{
+      --bg:#fff; --soft:#fff3f3; --card:#fdeaea; --muted:#6b7280; --accent:#e11d2d; --accent-dark:#c21824; --border:#f3dede;
+      --radius:12px; --container:1200px; --shadow:0 6px 20px rgba(16,24,40,0.06);
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0; background:var(--bg); color:#111827}
+
+    header{background:linear-gradient(180deg, #fff6f6, #fff6f6); border-bottom:1px solid var(--border); padding:18px 28px; display:flex; align-items:center; gap:18px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:38px;height:38px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#ff7b7b);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+    nav{margin-left:12px;display:flex;gap:18px;align-items:center}
+    nav a{color:var(--muted);text-decoration:none}
+    nav a.active{color:var(--accent);font-weight:600}
+
+    .wrap{max-width:var(--container);margin:22px auto;padding:0 20px}
+    h1{font-size:28px;margin:6px 0}
+    p.lead{color:var(--muted);margin:0 0 18px}
+
+    .tabs{display:flex;gap:12px;background:var(--soft);border-radius:10px;padding:8px}
+    .tab{flex:1;text-align:center;padding:12px;border-radius:8px;background:transparent;color:var(--muted);cursor:pointer}
+    .tab.active{background:#fff;border:1px solid var(--border);color:var(--accent);font-weight:600}
+
+    .grid{display:grid;grid-template-columns:1fr 520px;gap:18px;margin-top:18px}
+
+    .card{background:var(--card);padding:22px;border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border)}
+    .card h3{margin:0 0 8px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+    input[type=text], textarea, select{width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:transparent;font-size:14px}
+    textarea{min-height:120px;resize:vertical}
+    .row{display:flex;gap:12px;align-items:center}
+    .row .col{flex:1}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:8px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+    .btn.secondary{background:#fff;border:1px solid var(--border);color:var(--muted)}
+
+    .preview{min-height:360px;display:flex;align-items:center;justify-content:center;color:var(--muted);}
+    .preview img{max-width:100%;border-radius:10px}
+    .preview video{max-width:100%;border-radius:10px}
+
+    .small{font-size:13px;color:var(--muted)}
+
+    /* responsive */
+    @media (max-width:1100px){ .grid{grid-template-columns:1fr} .tabs{overflow:auto} }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">A+</div>
+      <div>
+        <div style="font-weight:700">ContentAI</div>
+        <div class="small">Create · Image · Video</div>
+      </div>
+    </div>
+    <nav style="margin-left:auto">
+      <a href="#" class="active">Create Post</a>
+      <a href="#">Dashboard</a>
+      <a href="#">Assets</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <h1>AI Content Generator</h1>
+    <p class="lead">Create engaging social media content with the power of AI</p>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="post">📄 Post</div>
+      <div class="tab" data-tab="image">🖼️ Image</div>
+      <div class="tab" data-tab="video">🎬 Video</div>
+    </div>
+
+    <div style="margin-top:18px" id="containers">
+
+      <!-- POST -->
+      <div class="grid panel" id="panel-post">
+        <div class="card">
+          <h3>Content Settings</h3>
+          <div class="small">Configure your AI-generated content</div>
+          <div style="margin-top:14px">
+            <label>Topic or Theme</label>
+            <input id="post-topic" type="text" placeholder="e.g., AI tools for content creation" />
+          </div>
+          <div style="margin-top:12px">
+            <div class="row">
+              <div class="col">
+                <label>Tone of Voice</label>
+                <select id="post-tone"><option value="">Select tone</option><option>Friendly</option><option>Professional</option><option>Funny</option></select>
+              </div>
+              <div style="width:180px">
+                <label>Platform</label>
+                <select id="post-platform"><option value="">Select platform</option><option>Instagram</option><option>LinkedIn</option><option>Twitter</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <div class="row">
+              <div class="col">
+                <label>Content Length</label>
+                <select id="post-length"><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long</option></select>
+              </div>
+              <div style="width:180px">
+                <label>Include Hashtags</label>
+                <select id="post-hashtags"><option>No</option><option>Yes</option></select>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <label>Keywords (optional)</label>
+            <input id="post-keywords" type="text" placeholder="e.g., AI, automation, productivity" />
+          </div>
+
+          <div style="margin-top:16px;display:flex;gap:12px">
+            <button class="btn" id="generate-post">✨ Generate Content</button>
+            <button class="btn secondary" id="copy-post">Copy</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Generated Content</h3>
+          <div class="small">Your AI-generated social media post</div>
+          <div class="preview" id="post-preview">Your generated content will appear here</div>
+        </div>
+      </div>
+
+      <!-- IMAGE -->
+      <div class="panel" id="panel-image" style="display:none">
+        <div class="card">
+          <h3>AI Image Generator</h3>
+          <div class="small">Generate custom images for your social media posts</div>
+          <div style="margin-top:12px">
+            <label>Image Description</label>
+            <textarea id="image-prompt" placeholder="Describe the image you want to generate..."></textarea>
+          </div>
+
+          <div style="margin-top:12px" class="row">
+            <div class="col">
+              <label>Style</label>
+              <select id="image-style"><option>Photorealistic</option><option>Illustration</option><option>Flat</option></select>
+            </div>
+            <div style="width:180px">
+              <label>Aspect Ratio</label>
+              <select id="image-ratio"><option>1:1</option><option>4:5</option><option>16:9</option></select>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            <button class="btn" id="generate-image">✨ Generate Image</button>
+          </div>
+
+          <div style="margin-top:16px" class="card" id="image-result" hidden>
+            <div class="small">Preview</div>
+            <div class="preview" id="image-preview"></div>
+            <div style="margin-top:12px;display:flex;gap:8px"><button class="btn" id="download-image">Download</button><button class="btn secondary" id="use-image">Use in Post</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIDEO -->
+      <div class="panel" id="panel-video" style="display:none">
+        <div class="card">
+          <h3>AI Video Generator</h3>
+          <div class="small">Create short videos with AI assistance</div>
+          <div style="margin-top:12px">
+            <label>Video Script or Concept</label>
+            <textarea id="video-prompt" placeholder="Describe your video concept or provide a script..."></textarea>
+          </div>
+
+          <div style="margin-top:12px" class="row">
+            <div class="col">
+              <label>Duration</label>
+              <select id="video-duration"><option>10s</option><option>20s</option><option>30s</option></select>
+            </div>
+            <div style="width:180px">
+              <label>Format</label>
+              <select id="video-format"><option>Landscape</option><option>Portrait</option><option>Square</option></select>
+            </div>
+          </div>
+
+          <div style="margin-top:16px"><button class="btn" id="generate-video">✨ Generate Video</button></div>
+
+          <div style="margin-top:16px" class="card" id="video-result" hidden>
+            <div class="small">Preview</div>
+            <div class="preview" id="video-preview"></div>
+            <div style="margin-top:12px;display:flex;gap:8px"><button class="btn" id="download-video">Download</button></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="margin-top:22px;color:var(--muted);font-size:13px">Server: <strong id="server-status">Not connected</strong></div>
+
+  </main>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const tab = t.dataset.tab;
+      document.getElementById('panel-post').style.display = tab==='post' ? 'grid' : 'none';
+      document.getElementById('panel-image').style.display = tab==='image' ? 'block' : 'none';
+      document.getElementById('panel-video').style.display = tab==='video' ? 'block' : 'none';
+    }))
+
+    // Helpers
+    function showServer(msg){ document.getElementById('server-status').textContent = msg }
+
+    // ------ POST generation ------
+    document.getElementById('generate-post').addEventListener('click', async ()=>{
+      const topic = document.getElementById('post-topic').value.trim();
+      const tone = document.getElementById('post-tone').value;
+      const platform = document.getElementById('post-platform').value;
+      const length = document.getElementById('post-length').value;
+      const keywords = document.getElementById('post-keywords').value;
+      const preview = document.getElementById('post-preview'); preview.textContent = 'Generating...';
+      try{
+        const res = await fetch('/api/generate-text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({topic,tone,platform,length,keywords})});
+        if(!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        preview.innerHTML = '<div style="padding:16px;line-height:1.4">'+(data.text||'No text returned')+'</div>';
+        showServer('Connected');
+      }catch(e){ preview.textContent = 'Error: '+e.message; showServer('Disconnected') }
+    })
+
+    document.getElementById('copy-post').addEventListener('click', ()=>{
+      const content = document.getElementById('post-preview').innerText || '';
+      if(!content) return alert('Nothing to copy'); navigator.clipboard.writeText(content).then(()=>alert('Copied'))
+    })
+
+    // ------ IMAGE generation ------
+    let lastImageUrl = '';
+    document.getElementById('generate-image').addEventListener('click', async ()=>{
+      const prompt = document.getElementById('image-prompt').value.trim();
+      const style = document.getElementById('image-style').value;
+      const ratio = document.getElementById('image-ratio').value;
+      if(!prompt) return alert('Please describe the image');
+      const resultCard = document.getElementById('image-result');
+      const preview = document.getElementById('image-preview'); preview.textContent = 'Generating...';
+      resultCard.hidden = false;
+      try{
+        const res = await fetch('/api/generate-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,style,ratio})});
+        if(!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        // server returns {image_base64} for demo
+        if(data.image_base64){
+          const img = new Image(); img.src = 'data:image/png;base64,'+data.image_base64;
+          img.onload = ()=>{ preview.innerHTML=''; preview.appendChild(img) }
+          lastImageUrl = img.src;
+          showServer('Connected');
+        } else {
+          preview.textContent = 'No image returned';
+        }
+      }catch(e){ preview.textContent = 'Error: '+e.message; showServer('Disconnected') }
+    })
+
+    document.getElementById('download-image').addEventListener('click', ()=>{
+      if(!lastImageUrl) return alert('No image to download'); const a=document.createElement('a'); a.href = lastImageUrl; a.download='ai-image.png'; document.body.appendChild(a); a.click(); a.remove();
+    })
+
+    document.getElementById('use-image').addEventListener('click', ()=>{
+      const preview = document.getElementById('post-preview'); if(!lastImageUrl) return alert('No image'); preview.innerHTML = '<img src="'+lastImageUrl+'" style="max-width:100%;border-radius:8px;" /><div style="height:10px"></div>'+preview.innerHTML;
+    })
+
+    // ------ VIDEO generation (demo flow) ------
+    let lastVideoUrl = '';
+    document.getElementById('generate-video').addEventListener('click', async ()=>{
+      const prompt = document.getElementById('video-prompt').value.trim();
+      const duration = document.getElementById('video-duration').value;
+      const format = document.getElementById('video-format').value;
+      if(!prompt) return alert('Describe the video script');
+      const resultCard = document.getElementById('video-result'); const preview = document.getElementById('video-preview'); preview.textContent = 'Generating video (demo)...'; resultCard.hidden = false;
+      try{
+        const res = await fetch('/api/generate-video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,duration,format})});
+        if(!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        if(data.video_base64){
+          const blob = base64ToBlob(data.video_base64, 'video/mp4'); const url = URL.createObjectURL(blob); const v = document.createElement('video'); v.controls=true; v.src=url; preview.innerHTML=''; preview.appendChild(v); lastVideoUrl = url; showServer('Connected');
+        } else if(data.video_url){
+          const v = document.createElement('video'); v.controls=true; v.src = data.video_url; preview.innerHTML=''; preview.appendChild(v); lastVideoUrl = data.video_url; showServer('Connected');
+        } else {
+          preview.textContent = JSON.stringify(data);
+        }
+      }catch(e){ preview.textContent = 'Error: '+e.message; showServer('Disconnected') }
+    })
+
+    document.getElementById('download-video').addEventListener('click', ()=>{
+      if(!lastVideoUrl) return alert('No video to download'); const a=document.createElement('a'); a.href = lastVideoUrl; a.download='ai-video.mp4'; document.body.appendChild(a); a.click(); a.remove();
+    })
+
+    // helper: base64 to blob
+    function base64ToBlob(b64, type='application/octet-stream'){
+      const bin = atob(b64); const len = bin.length; const arr = new Uint8Array(len); for(let i=0;i<len;i++) arr[i]=bin.charCodeAt(i); return new Blob([arr], {type});
+    }
+
+    // Ping server to check connectivity
+    (async ()=>{
+      try{ const r = await fetch('/api/ping'); if(r.ok) showServer('Connected'); else showServer('Disconnected') }catch(e){ showServer('Disconnected') }
+    })();
+  </script>
+
+  <!--
+    --- Server files (save separately) ---
+
+    1) package.json
+    
+
+    2) server.js
+    
+    ---
+    3) assets folder: add demo.png and demo.mp4 inside an "assets" folder next to server.js. Use any small image and short mp4 for previews.
+
+    --- How to run locally ---
+    1. Save index.html (this file) and server.js + package.json into a folder.
+    2. Create folder "assets" and place demo.png and demo.mp4 there.
+    3. npm install
+    4. npm start
+    5. Open http://localhost:3000 in your browser.
+
+    --- To enable real AI providers ---
+    - Text: call OpenAI/Anthropic/Cohere from server.js with process.env keys. Don't put keys in the client.
+    - Images: call OpenAI Images / Stability / Replicate — return base64 or a hosted URL to the client.
+    - Video: integrate a provider (Runway, Synthesia, Pika, etc.) and either return a URL or stream base64 after job finishes.
+
+    If you want, I can now:
+      • generate a complete Git repo (zip) with server.js, package.json, index.html and sample assets, or
+      • wire the server code to OpenAI (text + images) so you can test with your key, or
+      • convert the front-end to React + Tailwind and split components.
+
+    Tell me which option you prefer and I will add it to the project file in the canvas.
+  -->
+</body>
+</html>
