@@ -4,9 +4,9 @@ import fs from "fs";
 import bodyParser from "body-parser";
 import axios from "axios";
 import { fileURLToPath } from "url";
-import dotenv from "dotenv";
+// import dotenv from "dotenv";
 
-dotenv.config();
+// dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
