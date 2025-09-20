@@ -44,15 +44,17 @@
       document.getElementById("textOutput").value = data.text || data.error;
     }
 
-    async function generateImage() {
-      const prompt = document.getElementById("imgPrompt").value;
-      const res = await fetch("/api/generate-image", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt })
-      });
-      const data = await res.json();
-      document.getElementById("imgOutput").src = "data:image/png;base64," + data.image;
-    }
+   async function generateImage() {
+  const prompt = document.getElementById("imgPrompt").value;
+  const res = await fetch("/api/generate-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt })
+  });
+  const data = await res.json();
+  document.getElementById("imgOutput").src = "data:image/png;base64," + data.image;
+}
+
 
     async function generateVideo() {
       const prompt = document.getElementById("videoPrompt").value;

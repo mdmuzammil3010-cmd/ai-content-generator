@@ -1,12 +1,10 @@
 import express from "express";
 import path from "path";
-import fs from "fs";
 import bodyParser from "body-parser";
-import axios from "axios";
 import { fileURLToPath } from "url";
-// import dotenv from "dotenv";
-
-// dotenv.config();
+import { BedrockRuntimeClient, InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime";
+import dotenv from "dotenv";
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,88 +13,109 @@ const app = express();
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(express.static(__dirname));
 
-// Ping
-app.get("/api/ping", (req, res) => res.sendStatus(200));
+// 🟢 Bedrock Client (Nova Pro + Canvas)
+const client = new BedrockRuntimeClient({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
-// Helper function to format AI text with bullet points and hashtags
-function formatContent(rawText, keywords) {
-  const sentences = rawText.split(/\. |\n/).filter(s => s.trim() !== "");
-  const bullets = sentences.map(s => `- ${s.trim().replace(/\.$/, "")}.`).join("\n");
-
-  let tags = "";
-  if (keywords) {
-    const words = keywords.split(",").map(k => k.trim().replace(/\s+/g, ""));
-    tags = "\n\n" + words.map(w => `#${w}`).join(" ");
-  }
-
-  return `**Your Post**\n\n${bullets}${tags}`;
-}
-
-// 🟢 Generate text (Groq API only)
+// 🟢 Generate Text (Nova Pro)
 app.post("/api/generate-text", async (req, res) => {
   try {
-    const { topic, tone, platform, length, keywords } = req.body;
+    const { topic } = req.body;
+    const prompt = `Write a short, engaging social media post about: ${topic}`;
 
-    const prompt = `(${platform || "Any platform"}) ${tone ? tone + ":" : ""} 
-      Write a ${length || "short"} social media post about ${topic || "your topic"}.
-      ${keywords ? " Keywords: " + keywords : ""}
+    const command = new InvokeModelCommand({
+      modelId: "amazon.nova-pro-v1:0",
+      contentType: "application/json",
+      accept: "application/json",
+      body: JSON.stringify({
+        // ✅ Chat-based input format
+        messages: [
+          { role: "user", content: [{ text: prompt }] }
+        ],
+        inferenceConfig: {
+          temperature: 0.7,
+          maxTokens: 300,
+          topP: 0.9
+        }
+      }),
+    });
 
-      Please format the post as follows:
-      - Include a heading at the top
-      - Use bullet points for key ideas
-      - Add 3-5 relevant hashtags at the bottom`;
+    const response = await client.send(command);
+    const result = JSON.parse(new TextDecoder().decode(response.body));
 
-    if (!process.env.GROQ_API_KEY) {
-      return res.status(500).json({ error: "Missing GROQ_API_KEY in .env file" });
-    }
+    // ✅ Nova returns an array of message outputs
+    const aiText = result.output?.message?.content
+      ?.map(c => c.text)
+      .join(" ") || "No response";
 
-    const response = await axios.post(
-    "https://api.groq.com/openai/v1/chat/completions",
-    {
-      model: "llama-3.1-8b-instant",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 300,
-      temperature: 0.7
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      }
-    }
-  );
-
-    const aiText = response.data.choices?.[0]?.message?.content || "No response";
-    const formattedText = formatContent(aiText, keywords);
-
-    res.json({ text: formattedText });
+    res.json({ text: aiText });
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ error: "AI generation failed", details: err.message });
+    console.error("Nova Pro Error:", err);
+    res.status(500).json({ error: "Nova Pro text generation failed", details: err.message });
   }
 });
 
-// Generate image (demo)
+// 🟢 Generate Image (Nova Canvas)
 app.post("/api/generate-image", async (req, res) => {
-  const demoPath = path.join(__dirname, "assets", "demo.jpg");
-  if (fs.existsSync(demoPath)) {
-    const b64 = fs.readFileSync(demoPath, { encoding: "base64" });
-    return res.json({ image_base64: b64 });
+  try {
+    const { prompt } = req.body;
+    if (!prompt || !prompt.trim()) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    // Add "Generate an image of" to help Nova Canvas understand
+    const fullPrompt = `Generate an image of: ${prompt}`;
+
+    const command = new InvokeModelCommand({
+      modelId: "amazon.nova-canvas-v1:0",
+      contentType: "application/json",
+      accept: "application/json",
+      body: JSON.stringify({
+        messages: [
+          {
+            role: "user",
+            content: [{ text: fullPrompt }]
+          }
+        ]
+      }),
+    });
+
+    const response = await client.send(command);
+    const raw = new TextDecoder().decode(response.body);
+    console.log("Nova Canvas raw response:", raw);
+
+    const result = JSON.parse(raw);
+
+    // Check for images in the model's response
+    if (!result.images || !result.images.length) {
+      throw new Error("No image returned from Nova Canvas. Try a more descriptive prompt.");
+    }
+
+    const imageBase64 = result.images[0];
+    res.json({ image: imageBase64 });
+
+  } catch (err) {
+    console.error("Nova Canvas Error:", err);
+    res.status(500).json({
+      error: "Nova Canvas image generation failed",
+      details: err.message
+    });
   }
-  return res.status(500).send("Demo image not found. Create assets/demo.png");
 });
 
-// Generate video (demo)
+
+// 🟢 Demo video (placeholder)
 app.post("/api/generate-video", async (req, res) => {
-  const demoPath = path.join(__dirname, "assets", "demo.mp4");
-  if (fs.existsSync(demoPath)) {
-    const b64 = fs.readFileSync(demoPath, { encoding: "base64" });
-    return res.json({ video_base64: b64 });
-  }
-  return res.json({
+  res.json({
     video_url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
   });
 });
 
+// 🟢 Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("🚀 Server running on", PORT));
+app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
